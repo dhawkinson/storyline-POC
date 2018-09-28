@@ -1,0 +1,18 @@
+{
+    "development": {
+        "username": "root",
+        "password": "fsjsDB0!745",
+        "database": "storyline_dev",
+        "host": "127.0.0.1",
+        "port": 3306,
+        "dialect": "mysql"
+    },
+    "test": {
+        "username": "root",
+        "password": null,
+        "database": "storyline_test",
+        "host": "127.0.0.1",
+        "port": 3307,
+        "dialect": "mysql"
+    }
+}
