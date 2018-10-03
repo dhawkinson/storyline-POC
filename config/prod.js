@@ -2,8 +2,10 @@
 //  prod.js - return prod keys
 
 module.exports = {
-    localClientID: process.env.LOCAL_CLIENT_ID,
-    localClientSecret: process.env.LOCAL_CLIENT_SECRET,
+    sqlBB: process.env.SQL_DB,
+    sqlUser: process.env.SQL_USER,
+    sqlPassword: process.env.SQL_PASSWORD,
+    sqlPort: process.env.SQL_PORT,
     sqlURI: process.env.SQL_URI,
-    cookieKey: process.env.COOKIE_KEY
+    sessionSecret: process.env.SESSION_SECRET
 };

@@ -1,9 +1,17 @@
-var express = require('express');
-var router = express.Router();
+'use strict';
+
+//  library modules
+const express = require('express');
+const Index  = express.Router();
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Learning Outcomes Data Capture' });
-});
+module.exports = (Index) => {
+    Index.get('/', function (req, res, next) {
+      res.render('index');
+    });
 
-module.exports = router;
+    Index.get('/#top', function (req, res, next) {
+      res.render('index');
+    });
+};
+

@@ -2,31 +2,51 @@
 
 //  using commonjs notation
 //  Library modules
-const bodyParser    = require('body-parser');
-const cookieParser  = require('cookie-parser');
-const cookieSession = require('cookie-session');
-const createError   = require('http-errors');
-const express       = require('express');
-const logger        = require('morgan');
-const passport      = require('passport');
-const path          = require('path');
-const Sequelize     = require('sequelize');
+const bodyParser     = require('body-parser');
+const cookieParser   = require('cookie-parser');
+const express        = require('express');
+const passport       = require('passport');
+const path           = require('path');
+const Sequelize      = require('sequelize');
+const session        = require('express-session');
+const SequelizeStore = require('connect-session-sequelize')(session.Store);
 
-//  set up app object
-const app           = express();
+/************************************************** 
+ * NOTE: In development -- while offline from LM, 
+ * the app is configured to run with SEQUELIZE, using the 'mysql' dialect (it's free).
+ * When we bring it into CF for testing, we will reconfigure
+ * to run with SEQUELIZE, using the 'tedious' dialect.
+ * YES 'tedious' is the dialect for MS SQL-server, go figure!
+ **************************************************/
 
 //  Local modules
-//  Express trick: we don't need any properties from www/user/passport so set no variables, but we need the modules
-require('./bin/www');
-
 const keys = require('./config/keys');
-
-//  connect to db
 const sequelize = new Sequelize(keys.sqlDB, keys.sqlUser, keys.sqlPassword, {
     host: 'localhost',
-    dialect: 'mysql',
-    operatorsAliases: false
+    dialect: 'mysql'
 });
+
+//  set up app object
+const app = express();
+
+// view engine parameters setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
+
+//  middleware calls (app.use)  unconditional, these are always called
+app.use('/static', express.static(path.join(__dirname, 'public')));
+//app.use(session(sess));
+app.use(cookieParser())
+app.use(session({
+    secret: `${keys.sessionSecret}`,
+    store: new SequelizeStore({
+        db: sequelize,
+        checkExpirationInterval: 900000, // The interval at which to cleanup expired sessions in milliseconds (15 min).
+        expiration: 86400000 // The maximum age (in milliseconds) of a valid session (1 day).
+    }),
+    resave: false, // we support the touch method so per the express-session docs this should be set to false
+    proxy: true // if you do SSL outside of node.
+}));
 //  test the db connection
 sequelize.authenticate()
     .then(() => {
@@ -36,36 +56,17 @@ sequelize.authenticate()
         console.error('Unable to connect to the database:', err);
     });
 
-
-//  middleware calls (app.use)
-//  unconditional, these are always called
-app.use(bodyParser.json());
-app.use(
-    cookieSession({
-        maxAge: 30 * 24 * 60 * 60 * 1000,
-        keys: [keys.cookieKey]
-    })
-);
+app.use(bodyParser.json()); //  ability to parse JSON. Necessary for sending data
+app.use(bodyParser.urlencoded({ extended: false })); //  to read data from URLs (GET requests)
 app.use(passport.initialize());
 app.use(passport.session());
 
 //  routing
-//require('./routes/authRoutes')(app);
+require('./routes/index')(app);
+require('./routes/login')(app);
 
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-    next(createError(404));
-});
+//  express tells node to listen for activity on a specific port
+const PORT = process.env.PORT || 3000;
+app.listen(PORT);
 
-// error handler
-app.use(function (err, req, res, next) {
-    // set locals, only providing error in development
-    res.locals.message = err.message;
-    res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-    // render the error page
-    res.status(err.status || 500);
-    res.render('error');
-});
-
-module.exports = app;
+console.log('App listening on port', PORT)
