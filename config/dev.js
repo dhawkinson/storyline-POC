@@ -6,5 +6,5 @@ module.exports = {
     sqlUser: 'root',
     sqlPassword: 'fsjsDB0!745',
     sqlPort: 3306,
-    sessionSecret: 'hjdbviosv!32'
+    sessionSecret: 'hjdbviosv!32%NVDVNDmsfsbvajhdfvc'
 };

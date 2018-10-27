@@ -13,17 +13,25 @@ a {
   color: darkblue;
 }
 
-.indexHead, .loginHead {
+.head {
   margin-top: 15%;
   text-align: center;
 }
 
 form {
-  margin-top: -5em;
+  margin-top: 2.5em;
 }
 
-.username {
-  margin-left: 27.5em;
+label {
+  margin: 0 .5em 0 2.5em;
+}
+
+button {
+  margin-left: 2em;
+}
+
+.form {
+  margin-left: 12.5em;
 }
 
 .password {
@@ -32,4 +40,8 @@ form {
 
 .login {
   margin-left: -22em;
+}
+
+.users {
+  margin-top: 5em;
 }

@@ -1,15 +1,14 @@
 extends layout
 
 block content
-    include ./includes/_nav
     .container
-    h2.loginHead Please Login
-    form(action='/login', method='post')
-    div
-        label Username:
-        input.username(type='text', name='username')
-    span
-        label Password:
-        input.password(type='password', name='password')
-    span
-        input.login(type='submit', value='Log In')
+        include ./includes/_head_no_nav
+        h2.head Please Login
+        .form
+            form(action='/login', method='get')
+                label(for='username') User Name (email)
+                input(type='text', name='username')
+                label(for='password') Password
+                input(type='password', name='password')
+                button.btn.btn-link
+                    a(href='/process') Login

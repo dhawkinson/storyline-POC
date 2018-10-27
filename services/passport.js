@@ -6,9 +6,9 @@ const LocalStrategy = require('passport-local').Strategy;
 const sequelize     = require('sequelize');
 
 //  Local modules
-//const keys = require('../config/keys');
+const keys = require('../config/keys');
 
-const User = sequelize.model('user');
+const User = sequelize.model('users');
 
 passport.serializeUser((user, done) => {
     done(null, user.id);
@@ -22,24 +22,21 @@ passport.deserializeUser((id, done) => {
 });
 
 //  instruct app how to use passport with the local strategy
-//  pulled from http://www.passportjs.org/docs/authenticate/
-passport.use(new LocalStrategy(
-    function (username, password, done) {
-        User.findOne({ username: username }, function (err, user) {
-            if (err) {
-                return done(err);
-            }
-            if (!user) {
-                return done(null, false, {
-                    message: 'Username (email) not found.'
-                });
-            }
-            if (!user.validPassword(password)) {
-                return done(null, false, {
-                    message: 'Incorrect password.'
-                });
-            }
-            return done(null, user);
-        });
-    }
-));
+passport.use(new LocalStrategy
+    (
+        function (username, password, done) {
+            User.findOne({ username: username }, function (err, user) {
+                if (err) {
+                    return done(err);
+                }
+                if (!user) {
+                    return done(null, false, { message: 'Username (email) not found.' });
+                }
+                if (!user.validPassword(password)) {
+                    return done(null, false, { message: 'Incorrect password.' });
+                }
+                return done(null, user);
+            });
+        }
+    )
+);

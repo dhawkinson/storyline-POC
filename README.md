@@ -13,9 +13,9 @@ A proof of concept project whose purpose is to:
 | Column           | UID | Type | Len | Req | Default | Description                     |
 |------------------|-----|------|-----|-----|---------|--------------------------------|
 |ID                |  X  | INT  |     |  X  |         |Generated value                 |
-email              |     | TEXT | 50  |  X  |         |user email                      |
+username              |     | TEXT | 50  |  X  |         |user email                      |
 | password         |     | TEXT | 50  |  X  |         |encrypted                       |
-| name             |     | TEXT | 50  |  X  |         |user name|
+| fulName             |     | TEXT | 50  |  X  |         |user full name|
 
 #### Table - Learner (Takers of Courses)
 | Column           | UID | Type | Len | Req | Default | Description                     |
@@ -29,10 +29,7 @@ email              |     | TEXT | 50  |  X  |         |learner email            
 |------------------|-----|------|-----|-----|---------|--------------------------------|
 |ID                |  X  | INT  |     |  X  |         |Generated value                 |
 | courseNumber     |     | TEXT |     |  X  |         | course identifier                      |
-| title             |     | TEXT | 50  |  X  |         |course title|
-type              |     | TEXT | 10  |     |         |type of course (TBD)                      |
-| source         |     | TEXT | 50  |     |         |author or supplier of the course|
-|pubYear                |     | TEXT  |     |  X  |         |Year the course was published                 |
+| title             |     | TEXT | 50  |  X  |         |course title|                     |
 | itemCount             |     | INT |     |  X  |         |number of questions in the course|
 passScore              |     | INT  |     |     |         |number correct to pass|
 | maxScore         |     | INT |     |     |         |maximum score recorded for the course|
@@ -44,7 +41,6 @@ passScore              |     | INT  |     |     |         |number correct to pas
 |date              |     | DATE |     |  X  |         |date the course was completed                 |
 | status             |     | INT |     |  X  |         |status of the outcome|
 | pointScore             |     | INT |     |  X  |         |score of the outcome|
-| pointMax             |     | INT |     |  X  |         |maximum points possible for the outcome|
 #### Table - Outcome_Details (Courses or Learning Opportunity Outcomes - Details)
 | Column           | UID | Type | Len | Req | Default | Description                     |
 |------------------|-----|------|-----|-----|---------|--------------------------------|
