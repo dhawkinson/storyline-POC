@@ -8,6 +8,7 @@ const express        = require('express');
 const passport       = require('passport');
 const path           = require('path');
 const Sequelize      = require('sequelize');
+const $              = require("jquery");
 //  we may not use these session objects
 //  until the decision is made to delete it, we will leave the logic commented out
 //const session        = require('express-session');

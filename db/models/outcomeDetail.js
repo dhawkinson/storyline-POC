@@ -11,7 +11,7 @@ module.exports = (sequelize, DataTypes) => {
     }, {});
     OutcomeDetail.associate = function(models) {
         // associations can be defined here
-        OutcomeDetail.belongsTo(Outcome);
+        OutcomeDetail.belongsTo(models.Outcome, { foreignKey: 'outcome_id' });  // a foreign key of the outcome model
     };
     return OutcomeDetail;
 };
