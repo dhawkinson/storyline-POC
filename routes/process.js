@@ -3,7 +3,9 @@
 //  library modules
 const express   = require('express');
 const rtProcess = express.Router();
-const XHR       = require('xmlhttprequest');
+const request   = require('request');
+const rpn       = require('request-promise-native');
+//const axios     = require('axios');
 //const $         = require("jquery");
 
 //  local modules
@@ -14,8 +16,8 @@ const OutcomeDetail = require('../db/models').OutcomeDetail;
 const Log           = require('../db/models').Log;
 
 //  initialize general variables
-let baseURL = 'http://localhost:3000/quizzes/'; //  this is the development value only
-let keysID = 'keys';
+let baseURL = 'http://localhost:3000/static/quizdata/';
+let keysID = 'keys.json';
 let jsonKeysList;
 let courseID;
 let jsonData;
@@ -32,30 +34,49 @@ let outcomeExists;
 let log;
 let logDate = Date.now();
 
-/*==================================================
+/*================================================== move
     define functions
 ==================================================*/
-//  get the list of keys to JSON data files
+//  GET the list of keys to JSON data files
 function loadJsonKeys() {
-    let xhr = new XHR();
-    xhr.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) { // XMLHttpRequest is finished successfully
-            jsonKeysList = JSON.parse(this.xhr.responseText);
-        }
+    let options = {
+        uri: baseURL + keysID,
+        headers: {
+            'User-Agent': 'Request-Promise'
+        },
+        json: true // Automatically parses the JSON string in the response
     };
-
-    xhr.open("GET", baseURL + keysID, true);
-    xhr.send();
-
-    return jsonKeysList;
+    rpn(options)
+        .then(function (res) {
+            jsonKeysList = res.keys;
+            console.log('Fetched', jsonKeysList);
+        })
+        .catch(function (err) {
+            // API call failed
+            console.log(err.message);
+            return err;
+        });
+        return jsonKeysList;
 }
 
 //  reset the list of keys to an empty array (prevents reprocessing of JSON data)
 function putEmptyJsonKeys() {
-    let xhr = new XHR();
+    var options = {
+        method: 'POST',
+        uri: baseURL + keysID,
+        body: '',
+        json: true // Automatically stringifies the body to JSON
+    };
 
-    xhr.open("PUT", baseURL + keysID, true);
-    xhr.send({});
+    rpn(options)
+        .then(function (parsedBody) {
+            // POST succeeded...
+            return;
+        })
+        .catch(function (err) {
+            // POST failed...
+            console.log(err.message);
+        });
 }
 
 //  load each JSON file item
@@ -302,14 +323,16 @@ function appendJsonKeys() {
 ==================================================*/
 
 
-/* GET processing route. */
+/*==================================================
+    process the JSON
+==================================================*/
 module.exports = (rtProcess) => {
     rtProcess.get('/process', function (req, res, next) {
         res.render('process');
 
         loadJsonKeys(); //  get list of JSON file keys from API
 
-        putEmptyJsonKeys(); //  reset the file keys List
+        /*putEmptyJsonKeys(); //  reset the file keys List
 
         //  loop on the keys -- get and parse JSON, then write SQL
         for ( let i =0; i < jsonKeysList.keys.length; i++ ) {
@@ -319,13 +342,13 @@ module.exports = (rtProcess) => {
             parseLearner();
             parseCourse();
             parseOutcome();
-            parseOutcomeDetails();
+            parseOutcomeDetails();*/
 
             /*==================================================
                 All data has been gathered -- now write it
             ==================================================*/
 
-            log = [];
+            /*log = [];
             writeLearnerSQL();
             writeCourseSQL();
             writeOutcomeSQL();
@@ -335,8 +358,8 @@ module.exports = (rtProcess) => {
         //  the outcome key if written back the Keys list for reprocessing
         //  after troubleshooting the problems
         //  hopefully this never happens
-        if ( keysFailed ) {
+        /*if ( keysFailed ) {
             appendJsonKeys();
-        }
+        }*/
     }); // end of process route
 };  //  end of module exports

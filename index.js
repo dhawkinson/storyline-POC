@@ -8,11 +8,11 @@ const express        = require('express');
 const passport       = require('passport');
 const path           = require('path');
 const Sequelize      = require('sequelize');
-const $              = require("jquery");
 //  we may not use these session objects
 //  until the decision is made to delete it, we will leave the logic commented out
 //const session        = require('express-session');
 //const SequelizeStore = require('connect-session-sequelize')(session.Store);
+//const serveStatic    = require('serve-static');
 
 //  Local modules
 const keys = require('./config/keys');
@@ -39,20 +39,7 @@ app.set('view engine', 'pug');
 
 //  middleware calls (app.use)  unconditional, these are always called
 app.use('/static', express.static(path.join(__dirname, 'public')));
-//app.use(session(sess));
 app.use(cookieParser())
-//  we may not use this session logic
-//  until the decision is made to delete it, we will leave the logic commented out
-/*app.use(session({
-    secret: `${keys.sessionSecret}`,
-    store: new SequelizeStore({
-        db: sequelize,
-        checkExpirationInterval: 900000, // The interval at which to cleanup expired sessions in milliseconds (15 min).
-        expiration: 86400000 // The maximum age (in milliseconds) of a valid session (1 day).
-    }),
-    resave: false, // we support the touch method so per the express-session docs this should be set to false
-    proxy: true // if you do SSL outside of node.
-}));*/
 //  test the db connection
 sequelize.authenticate()
     .then(() => {

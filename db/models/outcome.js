@@ -13,7 +13,7 @@ module.exports = (sequelize, DataTypes) => {
     // associations can be defined here
     Outcome.belongsTo(models.Course, { foreignKey: 'course_id' }); // a foreign key of the course model
     Outcome.belongsTo(models.Learner, { foreignKey: 'learner_id' }); // a foreign key of the learner model
-    Outcome.hasMany(models.OutcomeDetails, { foreignKey: 'outcome_id' }); // 1 outcome.id has many instances in outcomesDetails (1:many)
+    Outcome.hasMany(models.OutcomeDetail, { foreignKey: 'outcome_id' }); // 1 outcome.id has many instances in outcomesDetails (1:many)
   };
   return Outcome;
 };
