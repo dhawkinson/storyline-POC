@@ -5,8 +5,6 @@ const express   = require('express');
 const rtProcess = express.Router();
 const request   = require('request');
 const rpn       = require('request-promise-native');
-//const axios     = require('axios');
-//const $         = require("jquery");
 
 //  local modules
 const Learner       = require('../db/models').Learner;
@@ -18,7 +16,6 @@ const Log           = require('../db/models').Log;
 //  initialize general variables
 let baseURL = 'http://localhost:3000/static/quizdata/';
 let keysID = 'keys.json';
-let jsonKeysList;
 let courseID;
 let jsonData;
 let keysFailed;
@@ -34,12 +31,45 @@ let outcomeExists;
 let log;
 let logDate = Date.now();
 
-/*================================================== move
+/*==================================================
     define functions
 ==================================================*/
-//  GET the list of keys to JSON data files
-function loadJsonKeys() {
-    let options = {
+//  GET the list of keys to JSON data files (returns a promise)
+const getKeysJson = async () => {
+    const options = {
+        method: 'GET',
+        uri: baseURL + keysID,
+        headers: { 'User-Agent': 'Request-Promise' },
+        json: true // Automatically parses the JSON string in the response
+    };
+    return (await rpn(options)).keys;
+};
+
+//  PUT an empty array to jsonKeysList (prevents reprocessing of JSON data)
+const putKeysJson = async () => {
+        //  this is the opening put back of an empty keys.json file
+        //  putting this file back empty at the start of the run prevents
+        //  double processing of JsonData files because there is an empty list of keys
+        //  therefore nothing can be selected for processing
+        //  @ EOJ, keys.json will be updated with any keys that may have failed to process
+        const options = {
+            method: 'PUT',
+            uri: baseURL + keysID,
+            resolveWithFullResponse: true,
+            body: {
+                keys: []
+            },
+            json: true // Automatically stringifies the body to JSON
+        };
+        return (await rpn(options)).req.Request.body;
+};
+
+//  EOJ push keysFailed onto keys.json then put it back out
+const putKeysFailed = async (keysFailed) => {
+    //  this function will execute at EOJ, only if there are failed Outcome Keys
+    //  those keys will be pushed back on to the keys array to be reprocessed after troubleshooting the log
+    const options = {
+        method: 'GET',
         uri: baseURL + keysID,
         headers: {
             'User-Agent': 'Request-Promise'
@@ -47,51 +77,64 @@ function loadJsonKeys() {
         json: true // Automatically parses the JSON string in the response
     };
     rpn(options)
-        .then(function (res) {
-            jsonKeysList = res.keys;
-            console.log('Fetched', jsonKeysList);
+    .then((keys) => {
+        keysFailed.forEach(courseID => {
+        keys.push(courseID);
         })
-        .catch(function (err) {
-            // API call failed
-            console.log(err.message);
-            return err;
-        });
-        return jsonKeysList;
+    })
+    .then((keys) => {
+        const options = {
+            method: 'PUT',
+            uri: baseURL + keysID,
+            resolveWithFullResponse: true,
+            body: {
+                keys: keys
+            },
+            json: true // Automatically stringifies the body to JSON
+        };
+        return (rpn(options)).req.Request.body;
+    })
+    .catch((err) => {
+        console.log(err.statusCode, err.error);
+        console.log(err)
+    });
 }
 
-//  reset the list of keys to an empty array (prevents reprocessing of JSON data)
-function putEmptyJsonKeys() {
-    var options = {
-        method: 'POST',
-        uri: baseURL + keysID,
-        body: '',
-        json: true // Automatically stringifies the body to JSON
+//  GET each JSON file item
+const getJsonData = async (courseID) => {
+    let jsonData;
+    const options = {
+        method: 'GET',
+        uri: baseURL + courseID,
+        headers: {
+            'User-Agent': 'Request-Promise'
+        },
+        json: true // Automatically parses the JSON string in the response
     };
 
-    rpn(options)
-        .then(function (parsedBody) {
-            // POST succeeded...
-            return;
-        })
-        .catch(function (err) {
-            // POST failed...
-            console.log(err.message);
-        });
-}
-
-//  load each JSON file item
-function loadJsonData(courseID) {
-    let xhr = new XHR();
-    xhr.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) { // XMLHttpRequest is finished successfully
-            jsonData = JSON.parse(this.xhr.responseText);
-        }
-    };
-
-    xhr.open("GET", baseURL + courseID, true);
-    xhr.send();
+    try {
+        jsonData = await rpn(options);
+    } catch (e) {
+        console.log(e);
+    }
 
     return jsonData;
+    /*const options = {
+        method: 'GET',
+        uri: baseURL + courseID,
+        headers: {
+            'User-Agent': 'Request-Promise'
+        },
+        json: true // Automatically parses the JSON string in the response
+    };
+
+    await rpn(options)
+        .then((res) => {
+            return Promise.resolve(jsonData = res.body);
+        })
+        .catch(() => {
+            Promise.reject(err);
+        });*/
 }
 
 //  parse out the Learner data
@@ -294,52 +337,31 @@ function writeLogSQL() {
     }
 }
 
-function appendJsonKeys() {
-    let xhr = new XHR();
-    jsonKeysList = {
-        keys: []
-    };
-    xhr.onreadystatechange = function () {
-        if (this.readyState == 4 && this.status == 200) { // XMLHttpRequest is finished successfully
-            jsonKeysList = JSON.parse(this.xhr.responseText);
-        }
-    };
-
-    xhr.open("GET", baseURL + keysID, true);
-    xhr.send();
-
-    jsonKeysList.push(keysFailed);
-
-    xhr = new XHR();
-
-    xhr.open("PUT", baseURL + keysID, true);
-    xhr.send(jsonKeysList);
-
-    return;
-}
-
 /*==================================================
     end of function definitions
 ==================================================*/
-
 
 /*==================================================
     process the JSON
 ==================================================*/
 module.exports = (rtProcess) => {
-    rtProcess.get('/process', function (req, res, next) {
-        res.render('process');
+    rtProcess.get('/process', async (req, res) => {
 
-        loadJsonKeys(); //  get list of JSON file keys from API
+        const jsonKeysList = await (getKeysJson());
+        console.log("GET json keys", jsonKeysList);
+        try {
+            const keys = await (putKeysJson());
+            console.log("PUT empty keys", keys);
+        } catch(err) {
+            console.log('Error',err.statusCode, err.name);
+        }
 
-        /*putEmptyJsonKeys(); //  reset the file keys List
+        //  loop on the keys (courseID) -- get and parse JSON, then write SQL
+        jsonKeysList.forEach(courseID => {
+            console.log(courseID);
+            //getJsonData(courseID);
 
-        //  loop on the keys -- get and parse JSON, then write SQL
-        for ( let i =0; i < jsonKeysList.keys.length; i++ ) {
-            courseID = jsonKeysList.keys[i];
-            loadJsonData(courseID);
-
-            parseLearner();
+            /*parseLearner();
             parseCourse();
             parseOutcome();
             parseOutcomeDetails();*/
@@ -352,14 +374,17 @@ module.exports = (rtProcess) => {
             writeLearnerSQL();
             writeCourseSQL();
             writeOutcomeSQL();
-            writeLogSQL();
-        }
+            writeLogSQL();*/
+            
+        });
         //  this routine kicks in if any Outcome transactions fail to commit.
         //  the outcome key if written back the Keys list for reprocessing
         //  after troubleshooting the problems
         //  hopefully this never happens
-        /*if ( keysFailed ) {
-            appendJsonKeys();
-        }*/
+        if ( keysFailed ) {
+            putKeysFailed(keysFailed);
+        }
+
+        res.render("process");
     }); // end of process route
 };  //  end of module exports

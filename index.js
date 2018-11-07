@@ -56,7 +56,11 @@ app.use(passport.session());
 
 //  routing
 require('./routes/index')(app);
-require('./routes/login')(app);
+//  We may not need the login route
+//  the idea is that we haven't really decided whether we will be authenticating users
+//  without authentication, there is no need for a login
+//  until the decision is made to delete it, we will leave the logic commented out
+//require('./routes/login')(app);
 require('./routes/process')(app);
 //  We may not need the user route
 //  the idea is that we will get users from however users are retrieved currently
