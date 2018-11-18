@@ -1,0 +1,13 @@
+{
+    "json": {
+        "scheme": "file://",
+        "path": "path/to/api"
+    },
+    "sql": {
+        "db": "storyline_prod",
+        "user": "root",
+        "password": "SQL_PASSWORD",
+        "port": "port number",
+        "uri": "path/to/db"
+    }
+}
