@@ -17,7 +17,6 @@ const OutcomeDetail = require('../db/models').OutcomeDetail;
 const Log           = require('../db/models').Log;
 
 //  services
-const connect       = require('../services/openConnection');
 const idsList       = require('../services/idsList');
 const failedKeys    = require('../services/failedIds');
 
