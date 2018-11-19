@@ -26,7 +26,7 @@ const getList = async (uri, idsList) => {
 
 //  Not sure if this is the right way to 'fire' idsCleared but it needs to be fired
 //  The idea is to get the empty array written back to 'ids.json' before returning to 'process.js'
-const clearList = async (uri, idsList) => {
+const updateList = async (uri, idsList) => {
     idsList.push()
     await fs.writeFile(uri, data, (err) => {
         if (err) throw err;
@@ -37,7 +37,7 @@ const clearList = async (uri, idsList) => {
 
 getList(uri, idsList);
 
-clearList(uri, idsList)
+updateList(uri, idsList)
 
 console.log('end of failedIds',idsList);
 

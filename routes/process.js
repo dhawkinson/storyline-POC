@@ -17,6 +17,7 @@ const OutcomeDetail = require('../db/models').OutcomeDetail;
 const Log           = require('../db/models').Log;
 
 //  services
+const connect       = require('../services/openConnection');
 const idsList       = require('../services/idsList');
 const failedKeys    = require('../services/failedIds');
 
@@ -260,6 +261,7 @@ function writeSQLData(learner, course, outcome, outcomeDetails, exists, failedOu
 
 router.get('/', async (req, res) => {
     //  will this 'fire' idsList and return the list of ids
+    app.use(connect);
     app.use(idsList);
     //  iterate on outcomes
     /*idsList.forEach(outcomeID) {
