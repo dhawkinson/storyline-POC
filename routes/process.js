@@ -6,7 +6,6 @@ const app          = express();
 const router       = express.Router();
 const fs           = require('fs');
 const config       = require('config');
-const EventEmitter = require('events');
 
 //  local modules
 //  SQL Models
@@ -17,14 +16,19 @@ const OutcomeDetail = require('../db/models').OutcomeDetail;
 const Log           = require('../db/models').Log;
 
 //  services
-const idsList       = require('../services/idsList');
-const failedKeys    = require('../services/failedIds');
-
+const outcomeIds    = require('../services/idsList');
+//const failedKeys    = require('../services/failedIds');
+console.log('require', outcomeIds);
 
 //  initialize general variables
-const scheme       = config.get('json.scheme')
-const jsonPath     = config.get('json.path');
-const url          = `${scheme}${jsonPath}/`;
+
+const uriProtocol = config.get('json.protocol');
+//  not used in development env because we are using protocol = file:
+//  kept in anticipation of moving to test and production
+//const uriHost     = config.get('json.host');
+//const uriPort     = config.get('json.port');
+const uriPath     = config.get('json.path');
+const url         = `${uriProtocol}//${uriPath}/`;
 let outcomeID;
 let failedOutcomes = [];
 //  initialize objects that hold SQL rows
@@ -48,10 +52,11 @@ const outcomesFailed = async (failedOutcomes) => {
         idsData = JSON.parse(data);
         });
     idsData.push(failedOutcomes);
-    await fs.writeFile(uri, idsData, (err) => {
+    idsData = JSON.stringify(idsData);
+    /*await fs.writeFile(uri, idsData, (err) => {
         if (err) throw err;
         console.log('The ids have been updated');
-        });
+        });*/
     return;
 }
 
@@ -258,22 +263,23 @@ function writeSQLData(learner, course, outcome, outcomeDetails, exists, failedOu
     processing route
 ==================================================*/
 
-router.get('/', async (req, res) => {
-    //  will this 'fire' idsList and return the list of ids
-    app.use(connect);
-    app.use(idsList);
+router.get('/', (req, res) => {
+    //  will this 'fire' outcomeIds and return the list of ids
+    app.use(outcomeIds);
+    console.log('app.use outcomeIds', outcomeIds);
     //  iterate on outcomes
-    /*idsList.forEach(outcomeID) {
-        let outcomeDetails = [];
+    outcomeIds.forEach((outcomeId) => {
+        console.log(outcomeId);
+        /*let outcomeDetails = [];
         let exists = {};
         getJsonData();
         parseJsonData(learner, course, outcome, outcomeDetails, exists);
-        writeSQLData(learner, course, outcome, outcomeDetails, exists, failedOutcomes);
-    }
-    if ( failedOutcomes ) {
+        writeSQLData(learner, course, outcome, outcomeDetails, exists, failedOutcomes);*/
+    });
+    /*if ( failedOutcomes ) {
         outcomesFailed(failedOutcomes);
-    }
-    res.render("process");  //  install a progress bar of some sort*/
+    }*/
+    res.render("process");  //  install a progress bar of some sort
 }); // end of router GET
 
 module.exports = router;

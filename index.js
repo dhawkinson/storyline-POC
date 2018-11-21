@@ -2,16 +2,18 @@
 
 //  using commonjs notation
 //  Library modules
-const bodyParser     = require('body-parser');
-const cookieParser   = require('cookie-parser');
-const config          = require('config');
-const express        = require('express');
-const passport       = require('passport');
-const path           = require('path');
-const Sequelize      = require('sequelize');
+const bodyParser   = require('body-parser');
+const cookieParser = require('cookie-parser');
+const config       = require('config');
+const express      = require('express');
+const passport     = require('passport');
+const path         = require('path');
+const Sequelize    = require('sequelize');
 //  Local modules
-const processRt      = require('./routes/process');
-const indexRt        = require('./routes/index');
+const processor    = require('./routes/process');
+const index        = require('./routes/index');
+
+const uriPort      = config.get('json.port');
 
 
 //  establish the db connection
@@ -32,8 +34,7 @@ const app = express();
 
 // view engine parameters setup
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'pug');
-
+app.set('view engine', 'pug');;
 //  middleware calls (app.use)  unconditional, these are always called
 app.use('/static', express.static(path.join(__dirname, 'public')));
 app.use(cookieParser())
@@ -52,8 +53,8 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 //  routes
-app.use('api/process', processRt);
-app.use('/', indexRt);
+app.use('api/process', processor);
+app.use('/', index);
 
 //  express tells node to listen for activity on a specific port
 const PORT = process.env.PORT || 3000;

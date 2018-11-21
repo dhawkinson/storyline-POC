@@ -8,37 +8,51 @@
 ==================================================*/
 
 //  node modules
+const express     = require('express');
 const fs          = require('fs');
 const config      = require('config');
 
-const scheme      = config.get('json.scheme')
-const jsonPath    = config.get('json.path');
-const url         = `${scheme}${jsonPath}/`;
-const idsID       = 'ids.json';
-const uri         = `${url}${idsID}`;
-let idsList = [];
+const app         = express();
 
-const getList = async (uri) => {
+const uriProtocol = config.get('json.protocol');
+const uriHost     = config.get('json.host');
+const uriPort     = config.get('json.port');
+const uriPath     = config.get('json.path');
+const url         = `${uriProtocol}//${uriPath}/`;
+const idsID       = 'ids.json';
+const uri         = new URL(`${url}${idsID}`);
+let idsList       = [];
+//let idsEmpty;
+
+const readList = async (uri) => {
     await fs.readFile(uri, (err, data) => {
         if (err) throw err;
-        return jsonData = JSON.parse(data);
-        });
+        idsList = JSON.parse(data).ids;
+        return;
+    });
 }
 
-//  Not sure if this is the right way to 'fire' idsCleared but it needs to be fired
 //  The idea is to get the empty array written back to 'ids.json' before returning to 'process.js'
 const clearList = async (uri) => {
-    let data = {'ids': []}
+    let data = JSON.stringify({'ids': []});
     await fs.writeFile(uri, data, (err) => {
         if (err) throw err;
-        console.log('The ids have been cleared');
-        });
+    });
 }
 
-getList(uri);
+const processList = async (idsList) => {
+    try {
+        idsList = await readList(uri);
+        //emptyList = await clearList(uri);
+        return idsList;
+    }
+    catch (err) {
+        return (console.log( new Error(err) ));
+    };
+}
 
-clearList(uri)
+processList(idsList);
 
-console.log('end of idsList',idsList);
+//idsList = ["5sM5YLnnNMN_1540338527220.json","5sM5YLnnNMN_1540389571029.json","6tN6ZMooONO_1540389269289.json"]
 
 module.exports = idsList;

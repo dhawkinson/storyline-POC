@@ -10,9 +10,12 @@
 const fs          = require('fs');
 const config      = require('config');
 
-const scheme      = config.get('json.scheme')
-const jsonPath    = config.get('json.path');
-const url         = `${scheme}${jsonPath}/`;
+
+const uriProtocol = config.get('json.protocol');
+const uriHost     = config.get('json.host');
+const uriPort     = config.get('json.port');
+const uriPath     = config.get('json.path');
+const url         = `${uriProtocol}//${uriHost}:${uriPort}${uriPath}/`;
 const idsID       = 'ids.json';
 const uri         = `${url}${idsID}`;
 let idsList = [];
