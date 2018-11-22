@@ -265,7 +265,7 @@ function writeSQLData(learner, course, outcome, outcomeDetails, exists, failedOu
 ==================================================*/
 
 router.get('/', (req, res) => {
-    
+    console.log('router.get', outcomeIds);
     //  iterate on outcomes
     outcomeIds.forEach((outcomeId) => {
         console.log(outcomeId);
