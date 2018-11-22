@@ -53,7 +53,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 //  routes
-app.use('api/process', processor);
+app.use('/api/process', processor);
 app.use('/', index);
 
 //  express tells node to listen for activity on a specific port
