@@ -23,12 +23,13 @@ console.log('require', outcomeIds);
 //  initialize general variables
 
 const uriProtocol = config.get('json.protocol');
-//  not used in development env because we are using protocol = file:
-//  kept in anticipation of moving to test and production
+//  the following two variables are not used in development env because we are using protocol = file:
+//  they are kept in anticipation of moving to test and production where the protocol will be changed to http: or https:
 //const uriHost     = config.get('json.host');
 //const uriPort     = config.get('json.port');
 const uriPath     = config.get('json.path');
 const url         = `${uriProtocol}//${uriPath}/`;
+const idsID       = 'ids.json';
 let outcomeID;
 let failedOutcomes = [];
 //  initialize objects that hold SQL rows
@@ -264,7 +265,7 @@ function writeSQLData(learner, course, outcome, outcomeDetails, exists, failedOu
 ==================================================*/
 
 router.get('/', (req, res) => {
-    //  will this 'fire' outcomeIds and return the list of ids
+    
     //  iterate on outcomes
     outcomeIds.forEach((outcomeId) => {
         console.log(outcomeId);

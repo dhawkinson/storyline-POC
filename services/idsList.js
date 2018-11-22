@@ -24,7 +24,7 @@ const idsID       = 'ids.json';
 const uri = new URL(`${url}${idsID}`);
 let dataIn = fs.readFileSync(uri);
 const idsList = JSON.parse(dataIn).ids;
-//  uncomment the following two lines when you get the idsList (pending promise) issue fixed
+
 let dataOut = JSON.stringify({'ids': []});
 fs.writeFileSync(uri, dataOut);
 
