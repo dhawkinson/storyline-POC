@@ -265,8 +265,6 @@ function writeSQLData(learner, course, outcome, outcomeDetails, exists, failedOu
 
 router.get('/', (req, res) => {
     //  will this 'fire' outcomeIds and return the list of ids
-    app.use(outcomeIds);
-    console.log('app.use outcomeIds', outcomeIds);
     //  iterate on outcomes
     outcomeIds.forEach((outcomeId) => {
         console.log(outcomeId);

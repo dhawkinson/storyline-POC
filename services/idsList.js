@@ -8,51 +8,24 @@
 ==================================================*/
 
 //  node modules
-const express     = require('express');
 const fs          = require('fs');
 const config      = require('config');
 
-const app         = express();
-
 const uriProtocol = config.get('json.protocol');
-const uriHost     = config.get('json.host');
-const uriPort     = config.get('json.port');
+//  the following two variables are not used in development env because we are using protocol = file:
+//  they are kept in anticipation of moving to test and production where the protocol will be changed to http: or https:
+//  and where we will need a port
+//const uriHost     = config.get('json.host');
+//const uriPort     = config.get('json.port');
 const uriPath     = config.get('json.path');
 const url         = `${uriProtocol}//${uriPath}/`;
 const idsID       = 'ids.json';
-const uri         = new URL(`${url}${idsID}`);
-let idsList       = [];
-//let idsEmpty;
 
-const readList = async (uri) => {
-    await fs.readFile(uri, (err, data) => {
-        if (err) throw err;
-        idsList = JSON.parse(data).ids;
-        return;
-    });
-}
-
-//  The idea is to get the empty array written back to 'ids.json' before returning to 'process.js'
-const clearList = async (uri) => {
-    let data = JSON.stringify({'ids': []});
-    await fs.writeFile(uri, data, (err) => {
-        if (err) throw err;
-    });
-}
-
-const processList = async (idsList) => {
-    try {
-        idsList = await readList(uri);
-        //emptyList = await clearList(uri);
-        return idsList;
-    }
-    catch (err) {
-        return (console.log( new Error(err) ));
-    };
-}
-
-processList(idsList);
-
-//idsList = ["5sM5YLnnNMN_1540338527220.json","5sM5YLnnNMN_1540389571029.json","6tN6ZMooONO_1540389269289.json"]
+const uri = new URL(`${url}${idsID}`);
+let dataIn = fs.readFileSync(uri);
+const idsList = JSON.parse(dataIn).ids;
+//  uncomment the following two lines when you get the idsList (pending promise) issue fixed
+let dataOut = JSON.stringify({'ids': []});
+fs.writeFileSync(uri, dataOut);
 
 module.exports = idsList;
