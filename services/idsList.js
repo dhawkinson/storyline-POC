@@ -26,6 +26,6 @@ let dataIn = fs.readFileSync(uri);
 const idsList = JSON.parse(dataIn).ids;
 
 let dataOut = JSON.stringify({'ids': []});
-fs.writeFileSync(uri, dataOut);
+//fs.writeFileSync(uri, dataOut);
 
 module.exports = idsList;

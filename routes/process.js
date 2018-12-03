@@ -9,92 +9,38 @@ const config       = require('config');
 
 //  local modules
 //  SQL Models
+const Sequelize     = require('sequelize');
 const Learner       = require('../db/models').Learner;
 const Course        = require('../db/models').Course;
+const CourseDetail  = require('../db/models').CourseDetail;
 const Outcome       = require('../db/models').Outcome;
 const OutcomeDetail = require('../db/models').OutcomeDetail;
-const Log           = require('../db/models').Log;
+
+const Op            = Sequelize.Op;
 
 //  services
 const outcomeIds    = require('../services/idsList');
-//const failedKeys    = require('../services/failedIds');
-console.log('require', outcomeIds);
 
 //  initialize general variables
 
 const uriProtocol = config.get('json.protocol');
 //  the following two variables are not used in development env because we are using protocol = file:
-//  they are kept in anticipation of moving to test and production where the protocol will be changed to http: or https:
+//  they are kept in anticipation of moving to test and production where the protocol may be changed to http: or https:
 //const uriHost     = config.get('json.host');
 //const uriPort     = config.get('json.port');
 const uriPath     = config.get('json.path');
 const url         = `${uriProtocol}//${uriPath}/`;
 const idsID       = 'ids.json';
-let outcomeID;
-let failedOutcomes = [];
-//  initialize objects that hold SQL rows
-let learner;
-let course;
-let outcome;
-//  initialize log
-let log;
-let logDate = Date.now();
 
 /*==================================================
-    EOJ, push IdsFailed onto 'ids.json' then put it back out
+    define functions pertaining to PARSING and writing jsonData
 ==================================================*/
-
-const outcomesFailed = async (failedOutcomes) => {
-    const idsID       = 'ids.json';
-    const uri         = `${url}${idsID}`;
-
-    await fs.readFile(uri, (err, data) => {
-        if (err) throw err;
-        idsData = JSON.parse(data);
-        });
-    idsData.push(failedOutcomes);
-    idsData = JSON.stringify(idsData);
-    /*await fs.writeFile(uri, idsData, (err) => {
-        if (err) throw err;
-        console.log('The ids have been updated');
-        });*/
-    return;
-}
-
 /*==================================================
-    define functions pertaining to GETTING and PARSING jsonData
+    parse and write Courses
 ==================================================*/
-//  GET each JSON file item
-const getJsonData = async (url, outcomeID) => {
-    let uri  = `${url}${outcomeID}`;
-    await fs.readFile(uri, (err, data) => {
-        if (err) throw err;
-        return jsonData = JSON.parse(data);
-        });
-}
-
-//  parse out the json data
-function parseJsonData(learner, course, outcome, outcomeDetails, exists, failedOutcomes) {
-    //  the student/learner
-    learner = {
-        name: jsonData.strLearnerName,
-        email: jsonData.strLearnerEmail
-    };
-
-    Learner.findOne({
-        where: {
-            name: learner.name,
-            email: learner.email
-        }
-        .then(() => {
-            exists.learner = true;
-        })
-        .catch(() => {
-            exists.learner = false;
-        })
-    });
-    // the course
-    course = {
+const processCourse = async (jsonData) => {
+    //  parse course
+    let data = {
         number: jsonData.strQuizId,
         title: jsonData.strQuizName,
         itemCount: jsonData.nQuestionCount,
@@ -102,159 +48,192 @@ function parseJsonData(learner, course, outcome, outcomeDetails, exists, failedO
         maxScore: jsonData.nMaxScore,
         minScore: jsonData.nMinScore
     };
-
-    Course.findAll({
-        where: {
-            number: course.number,
-            title: course.title
+    
+    // write course
+    const [course, created] = await Course.findOrCreate({ 
+        where: { 
+            number: {
+                [Op.eq]: data.number 
+            } 
+        }, 
+        defaults: {
+            number: data.number,
+            title: data.title, 
+            itemCount: data.itemCount,
+            passScore: data.passScore,
+            maxScore: data.maxScore,
+            minScore: data.minScore
         }
-        .then(() => {
-            exists.course = true;
-        })
-        .catch(() => {
-            exists.course = false;
-        })
     });
-    // outcome (header)
-    outcome = {
-        course: jsonData.strQuizId,
-        learner: jsonData.strLearnerName,
-        email: jsonData.strLearnerEmail,
-        date: jsonData.dtmFinished,
-        status: jsonData.strStatus,
-        pointScore: jsonData.nPtScore
-    };
-
-    outcome.findAll({
-        where: {
-            course: outcome.course,
-            learner: outcome.learner,
-            date: outcome.date
-        }
-        .then(() => {
-            exists.outcome = true;
-        })
-        .catch(() => {
-            exists.outcome = false;
-        })
-    });
-    //  outcome (details)
-    outcomeDetails = [];
-    for (let j = 0; j < jsonData.aQuestions.length; j++) {
-        outcomeDetails[j] = {
-            lineNumber: jsonData.aQuestions[j].nQuestionNumber,
-            description: jsonData.aQuestions[j].strDescription,
-            correctResponse: jsonData.aQuestions[j].strCorrectResponse,
-            status: jsonData.aQuestions[j].strStatus,
-            learnerResponse: jsonData.aQuestions[j].strUserResponse,
-            weight: jsonData.aQuestions[j].nWeight,
-            points: jsonData.aQuestions[j].nPoints
-        };
+    if ( !created ) {
+        console.log(`Course ${course.number} already exists, no need to write`);
+    } else {
+        //  if course created
+        console.log(`Course ${course.number} written`);
+        //  parse courseDetails 
+        let questions = jsonData.aQuestions;
+        questions.forEach((question) => {
+            processCourseDetails(jsonData, question);
+        });
     }
-    return;
+}
+/*==================================================
+    parse and write CourseDetails
+==================================================*/
+async function processCourseDetails(jsonData, question) {
+    let data = {
+        courseNumber: jsonData.strQuizId,
+        lineNumber: question.nQuestionNumber,
+        description: question.strDescription,
+        correctResponse: question.strCorrectResponse,
+        weight: question.nWeight,
+        points: question.nPoints
+    };
+    //  write courseDetails
+    const [courseDetail, created] = await CourseDetail.findOrCreate({ 
+        where: { 
+            courseNumber: {
+                [Op.eq]: data.courseNumber
+            },
+            lineNumber: {
+                [Op.eq]: data.lineNumber
+            }
+         }, 
+        defaults: {
+            courseNumber: data.courseNumber,
+            lineNumber: data.lineNumber, 
+            description: data.description,
+            correctResponse: data.correctResponse,
+            weight: data.weight,
+            points: data.points
+        }
+    });
+    if ( created ) {
+        console.log(`CourseDetail ${courseDetail.courseNumber} line ${courseDetail.lineNumber} written`);
+    } else {
+        console.log(`CourseDetail ${courseDetail.courseNumber} line ${courseDetail.lineNumber} found, not written`);
+    }
 }
 
 /*==================================================
-    define functions pertaining to WRITING parsed jsonData and Log entries to SQL Tables
+    parse and write Learners
 ==================================================*/
-//  if the Learner exists it's OK, the learner has had a previous outcome -- no need to write Learner out again
-function writeSQLData(learner, course, outcome, outcomeDetails, exists, failedOutcomes) {
-    //  learner
-    if (!exists.learner) {
-        Learner.create(learner)
-            .then(() => {
-                log.push(`Learner ${learner.name} ${learner.email} was written`);
-            }).catch(error => {
-                // if there is a validation error
-                if (error.name === "SequelizeValidationError" || error.name === "SequelizeUniqueConstraintError") {
-                    log.push(`Learner ${learner.name} ${learner.email} not written because of validation error`);
-                } else {
-                    log.push(`Learner ${learner.name} ${learner.email} not written because of server error`);
-                }
-            });
-    } else {
-        log.push(`Learner ${learner.name} ${learner.email} not written -- already exists, not an error`);
-    }
-    exists.learner = false;
-    //  course
-    if (!courseExists) {
-        Course.create(course)
-            .then(() => {
-                log.push(`Course ${course.number} ${course.title} was written`);
-            }).catch(error => {
-                // if there is a validation error
-                if (error.name === "SequelizeValidationError" || error.name === "SequelizeUniqueConstraintError") {
-                    log.push(`Course ${course.number} ${course.title} not written because of validation error`);
-                } else {
-                    log.push(`Course ${course.number} ${course.title} not written because of server error`);
-                }
-            });
-    } else {
-        log.push(`Course ${course.number} ${course.title} not written -- already exists, not an error`);
-    }
-    exists.course = false;
-    //  outcome
-    if (!outcomeExists) {
+const processLearner = async (jsonData) => {   
+    //  parse learner
+    let data = { 
+        name: jsonData.strLearnerName,
+        email: jsonData.strLearnerEmail
+    };
 
-        return sequelize.transaction(function (t) {
-
-            // chain all your queries here. make sure you return them.
-            return Outcome.create({
-                course: outcome.course,
-                learner: outcome.learner,
-                date: outcome.date,
-                status: outcome.status,
-                pointScore: outcome.pointScore
-            }, {
-                transaction: t
-            }).then(function (outcome) {
-                for (let d = 0; d < outcomeDet.length; d++) {
-                    return outcome.setOutcomeDetail({
-                        lineNumber: outcomeDet[d].lineNumber,
-                        description: outcomeDet[d].description,
-                        correctResponse: outcomeDet[d].correctResponse,
-                        status: outcomeDet[d].status,
-                        learnerResponse: outcomeDet[d].learnerResponse,
-                        weight: outcomeDet[d].weight,
-                        points: outcomeDet[d].points
-                    }, {
-                        transaction: t
-                    });
-                }
-            });
-        }).then(function (res) {
-            // Transaction has been committed
-            res = `Outcome ${outcome.course} ${outcome.learner} ${outcome.date} was written, transaction committed`;
-            log.push(res);
-            //  destroy JSON file
-            $.ajax({
-                url: baseURL + keysID,
-                type: 'DELETE',
-                success: function (res) {
-                    res = `JSON file ${keysID} removed from ${baseURL}`;
-                    log.push(res);
-                }
-            });
-        }).catch(function (err) {
-            // Transaction has been rolled back
-            err = `Outcome ${outcome.course} ${outcome.learner} ${outcome.date} not written because of line validation or server error, transaction rolled back`;
-            log.push(err);
-            failedOutcomes.push(outcomeID);
+    //  write learner
+    const [learner, created] = await Learner.findOrCreate({ 
+        where: { 
+            email: {
+                [Op.eq]: data.email 
+            }
+        },
+        defaults: {
+            name: data.name, 
+            email: data.email
+        }
+    });
+    if ( !created ) {
+        console.log(`Learner ${learner.email} already exists, no need to write`);
+    } else {
+        console.log(`Learner ${learner.email} written`);
+    }
+}
+/*==================================================
+    parse and write Outcome & OutcomeDetails
+==================================================*/
+async function processOutcome(jsonData, outcomeId, failedOutcomes) {
+    //  parse outcome
+    let data = {
+        course: jsonData.strQuizId,
+        learnerEmail: jsonData.strLearnerEmail,
+        date: jsonData.dtmFinished,
+        status: jsonData.strStatus,
+        pointScore: jsonData.nPtScore,
+        pointMax: jsonData.nMaxScore,
+        pointMin: jsonData.nMinScore
+    };
+    
+    // write course
+    const [outcome, created] = await Outcome.findOrCreate({ 
+        where: { 
+            course: {
+                [Op.eq]: data.course
+            },
+            learnerEmail: {
+                [Op.eq]: data.learnerEmail
+            },
+            date: {
+                [Op.eq]: data.date
+            } 
+        }, 
+        defaults: {
+            course: data.course,
+            learnerEmail: data.learnerEmail, 
+            date: data.date,
+            status: data.status,
+            pointScore: data.pointScore,
+            pointMax: data.pointMax,
+            pointMin: data.pointMin
+        }
+    });
+    if ( !created ) {
+        console.log(`Outcome ${outcome.course} ${outcome.learnerEmail} ${outcome.date} already exists, this is an error`);
+    } else {
+        //  if outcome created
+        //  parse outcomeDetails 
+        let questions = jsonData.aQuestions;
+        questions.forEach((question) => {
+            processOutcomeDetails(jsonData, question);
         });
     }
-    // log
-    for ( let l = 0; l < log.length; l++ ) {
-        let logItem = {
-            date: logDate,
-            course: outcomeID,
-            learner: learner.name,
-            seq: l,
-            logMessage: log[l]
-        };
-        Log.create(logItem)
-            .then(() => {
-                return;
-            });
+}
+/*==================================================
+    parse and write OutcomeDetails
+==================================================*/
+async function processOutcomeDetails(jsonData, question, outcomeId, failedOutcomes) {
+    //  parse OutcomeDetails
+    let data = {
+        courseNumber: jsonData.strQuizId,
+        learnerEmail: jsonData.strLearnerEmail,
+        outcomeDate: jsonData.dtmFinished,
+        lineNumber: question.nQuestionNumber,
+        status: question.strStatus,
+        learnerResponse: question.strUserResponse
+    };
+    //  write outcomeDetails
+    const [outcomeDetail, created] = await OutcomeDetail.findOrCreate({ 
+        where: { 
+            courseNumber: {
+                [Op.eq]: data.courseNumber
+            },
+            learnerEmail: {
+                [Op.eq]: data.learnerEmail
+            },
+            outcomeDate: {
+                [Op.eq]: data.date
+            },
+            lineNumber: {
+                [Op.eq]: data.lineNumber
+            } 
+        }, 
+        defaults: {
+            courseNumber: data.courseNumber,
+            learnerEmail: data.learnerEmail,
+            outcomeDate: data.date,
+            lineNumber: data.lineNumber, 
+            status: data.status,
+            learnerResponse: data.learnerResponse
+        }
+    });
+    if ( created ) {
+        console.log(`OutcomeDetail ${outcomeDetail.course} ${outcomeDetail.learnerEmail} ${outcomeDetail.outcomeDate} ${outcomeDetail.lineNumber} written`);
+    } else {
+        failedOutcomes.push(outcomeId);
     }
 }
 /*==================================================
@@ -265,18 +244,23 @@ function writeSQLData(learner, course, outcome, outcomeDetails, exists, failedOu
 ==================================================*/
 
 router.get('/', (req, res) => {
-    console.log('router.get', outcomeIds);
     //  iterate on outcomes
+    let failedOutcomes = [];
     outcomeIds.forEach((outcomeId) => {
-        console.log(outcomeId);
-        /*let outcomeDetails = [];
-        let exists = {};
-        getJsonData();
-        parseJsonData(learner, course, outcome, outcomeDetails, exists);
-        writeSQLData(learner, course, outcome, outcomeDetails, exists, failedOutcomes);*/
+        let jsonData;
+        let uri = new URL(`${url}${outcomeId}`);
+        jsonData = JSON.parse(fs.readFileSync(uri));
+        processCourse(jsonData);
+        processLearner(jsonData);
+        processOutcome(jsonData, outcomeId, failedOutcomes);
     });
-    /*if ( failedOutcomes ) {
-        outcomesFailed(failedOutcomes);
+    /*if ( failedOutcomes.length ) {
+        let uri = `${url}${idsID}`;
+        let dataIn  = fs.readFileSync(uri);
+        let idsList = JSON.parse(dataIn).ids;
+        idsList = idsList.concat(failedOutcomes);
+        idsList = JSON.stringify({"ids": idsList});
+        fs.writeFileSync(uri, idsList);
     }*/
     res.render("process");  //  install a progress bar of some sort
 }); // end of router GET

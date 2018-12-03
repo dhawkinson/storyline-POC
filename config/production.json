@@ -1,13 +1,16 @@
 {
     "json": {
         "scheme": "file://",
-        "path": "path/to/api"
+        "path": "<path/to/api>"
     },
     "sql": {
+        "protocol": "file:",
+        "host": "localhost",
         "db": "storyline_prod",
         "user": "root",
         "password": "SQL_PASSWORD",
-        "port": "port number",
-        "uri": "path/to/db"
+        "port": "<port number>",
+        "dialect": "mysql",
+        "uri": "<path/to/db>"
     }
 }

@@ -9,6 +9,9 @@ const express      = require('express');
 const passport     = require('passport');
 const path         = require('path');
 const Sequelize    = require('sequelize');
+
+const Op           = Sequelize.Op;
+
 //  Local modules
 const processor    = require('./routes/process');
 const index        = require('./routes/index');
@@ -24,10 +27,17 @@ const uriPort      = config.get('json.port');
  * YES 'tedious' is the dialect for MS SQL-server, go figure!
  **************************************************/
 
-/*const sequelize = new Sequelize(keys.sqlDB, keys.sqlUser, keys.sqlPassword, {
-    host: 'localhost',
-    dialect: 'mysql'
-});*/
+const sqlDb       = config.sql.db;
+const sqlUser     = config.sql.user;
+const sqlPassword = config.sql.password;
+const sqlPort     = config.sql.port;
+const sqlHost     = config.sql.host;
+const sqlDialect  = config.sql.dialect
+
+const sequelize = new Sequelize(sqlDb, sqlUser, sqlPassword, {
+    host: `${sqlHost}`,
+    dialect: `${sqlDialect}`
+});
 
 //  set up app object
 const app = express();
@@ -39,13 +49,13 @@ app.set('view engine', 'pug');;
 app.use('/static', express.static(path.join(__dirname, 'public')));
 app.use(cookieParser())
 //  test the db connection
-/*sequelize.authenticate()
+sequelize.authenticate()
     .then(() => {
         console.log('Connection has been established successfully.');
     })
     .catch(err => {
         console.error('Unable to connect to the database:', err);
-    });*/
+    });
 
 app.use(bodyParser.json()); //  ability to parse JSON. Necessary for sending data
 app.use(bodyParser.urlencoded({ extended: false })); //  to read data from URLs (GET requests)

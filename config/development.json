@@ -6,9 +6,12 @@
         "path": "/Users/doug5solas/sandbox/libertyMutual/server/api"
     },
     "sql": {
+        "protocol": "file:",
+        "host": "localhost",
         "db": "storyline_dev",
         "user": "root",
         "password": "fsjsDB0!745",
-        "port": 3306
+        "port": 3306,
+        "dialect": "mysql"
     }
 }

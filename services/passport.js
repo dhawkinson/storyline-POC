@@ -1,12 +1,11 @@
 'use strict';
 
 //  Library modules
+const config        = require('config');
 const passport      = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const sequelize     = require('sequelize');
 
-//  Local modules
-const keys = require('../config/keys');
 
 const User = sequelize.model('users');
 
