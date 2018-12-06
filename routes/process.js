@@ -36,6 +36,35 @@ const idsID       = 'ids.json';
     define functions pertaining to PARSING and writing jsonData
 ==================================================*/
 /*==================================================
+    parse and write Learners
+==================================================*/
+const processLearner = async (jsonData) => {   
+    //  parse learner
+    let data = { 
+        name: jsonData.strLearnerName,
+        email: jsonData.strLearnerEmail
+    };
+
+    //  write learner
+    const [learner, created] = await Learner.findOrCreate({ 
+        where: { 
+            email: {
+                [Op.eq]: data.email 
+            }
+        },
+        defaults: {
+            name: data.name, 
+            email: data.email
+        }
+    });
+    if ( !created ) {
+        console.log(`Learner ${learner.email} already exists, no need to write`);
+    } else {
+        console.log(`Learner ${learner.email} written`);
+    }
+}
+
+/*==================================================
     parse and write Courses
 ==================================================*/
 const processCourse = async (jsonData) => {
@@ -65,16 +94,15 @@ const processCourse = async (jsonData) => {
             minScore: data.minScore
         }
     });
-    if ( !created ) {
-        console.log(`Course ${course.number} already exists, no need to write`);
-    } else {
-        //  if course created
+    if ( created ) {
         console.log(`Course ${course.number} written`);
         //  parse courseDetails 
         let questions = jsonData.aQuestions;
         questions.forEach((question) => {
             processCourseDetails(jsonData, question);
         });
+    } else {
+        console.log(`Course ${course.number} already exists, no need to write`);
     }
 }
 /*==================================================
@@ -116,37 +144,9 @@ async function processCourseDetails(jsonData, question) {
 }
 
 /*==================================================
-    parse and write Learners
+    parse and write Outcomes
 ==================================================*/
-const processLearner = async (jsonData) => {   
-    //  parse learner
-    let data = { 
-        name: jsonData.strLearnerName,
-        email: jsonData.strLearnerEmail
-    };
-
-    //  write learner
-    const [learner, created] = await Learner.findOrCreate({ 
-        where: { 
-            email: {
-                [Op.eq]: data.email 
-            }
-        },
-        defaults: {
-            name: data.name, 
-            email: data.email
-        }
-    });
-    if ( !created ) {
-        console.log(`Learner ${learner.email} already exists, no need to write`);
-    } else {
-        console.log(`Learner ${learner.email} written`);
-    }
-}
-/*==================================================
-    parse and write Outcome & OutcomeDetails
-==================================================*/
-async function processOutcome(jsonData, outcomeId, failedOutcomes) {
+const processOutcome = async (jsonData, outcomeId, failedOutcomes) => {
     //  parse outcome
     let data = {
         course: jsonData.strQuizId,
@@ -158,7 +158,7 @@ async function processOutcome(jsonData, outcomeId, failedOutcomes) {
         pointMin: jsonData.nMinScore
     };
     
-    // write course
+    // write outcome
     const [outcome, created] = await Outcome.findOrCreate({ 
         where: { 
             course: {
@@ -181,22 +181,21 @@ async function processOutcome(jsonData, outcomeId, failedOutcomes) {
             pointMin: data.pointMin
         }
     });
-    if ( !created ) {
-        console.log(`Outcome ${outcome.course} ${outcome.learnerEmail} ${outcome.date} already exists, this is an error`);
-    } else {
-        //  if outcome created
+    if ( created ) {
+        console.log(`Outcome ${outcome.course} ${outcome.learnerEmail} ${outcome.date} written`);
         //  parse outcomeDetails 
         let questions = jsonData.aQuestions;
         questions.forEach((question) => {
-            processOutcomeDetails(jsonData, question);
+            processOutcomeDetails(jsonData, question, outcomeId, failedOutcomes);
         });
+    } else {
+        console.log(`Outcome ${outcome.course} ${outcome.learnerEmail} ${outcome.date} already exists, this is an error`);
     }
 }
 /*==================================================
     parse and write OutcomeDetails
 ==================================================*/
 async function processOutcomeDetails(jsonData, question, outcomeId, failedOutcomes) {
-    //  parse OutcomeDetails
     let data = {
         courseNumber: jsonData.strQuizId,
         learnerEmail: jsonData.strLearnerEmail,
@@ -224,7 +223,7 @@ async function processOutcomeDetails(jsonData, question, outcomeId, failedOutcom
         defaults: {
             courseNumber: data.courseNumber,
             learnerEmail: data.learnerEmail,
-            outcomeDate: data.date,
+            outcomeDate: data.outcomeDate,
             lineNumber: data.lineNumber, 
             status: data.status,
             learnerResponse: data.learnerResponse
@@ -250,18 +249,18 @@ router.get('/', (req, res) => {
         let jsonData;
         let uri = new URL(`${url}${outcomeId}`);
         jsonData = JSON.parse(fs.readFileSync(uri));
-        processCourse(jsonData);
         processLearner(jsonData);
+        processCourse(jsonData);
         processOutcome(jsonData, outcomeId, failedOutcomes);
     });
-    /*if ( failedOutcomes.length ) {
+    if ( failedOutcomes.length ) {
         let uri = `${url}${idsID}`;
         let dataIn  = fs.readFileSync(uri);
         let idsList = JSON.parse(dataIn).ids;
         idsList = idsList.concat(failedOutcomes);
         idsList = JSON.stringify({"ids": idsList});
         fs.writeFileSync(uri, idsList);
-    }*/
+    }
     res.render("process");  //  install a progress bar of some sort
 }); // end of router GET
 

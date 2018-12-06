@@ -1,0 +1,105 @@
+{
+    "nQuestionCount": 10,
+    "strQuizName": "Fabricated Course One",
+    "nPassingScore": 91,
+    "dtmFinished": 1525523468000,
+    "nMaxScore": 130,
+    "nMinScore": 5,
+    "nPtScore": 91,
+    "strQuizId": "5sM5YLnnNMN",
+    "strStatus": "C",
+    "strLearnerName":"Daffy Duck",
+    "strLearnerEmail":"daffy@duck.com",
+    "aQuestions":[ 
+        {
+            "strDescription":"text of question one",
+            "strCorrectResponse":true,
+            "strStatus":"C",
+            "strUserResponse":true,
+            "nWeight":3,
+            "nPoints": 5,
+            "nQuestionNumber": 1
+        },
+        {
+            "strDescription": "text of question two",
+            "strCorrectResponse": false,
+            "strStatus": "C",
+            "strUserResponse": true,
+            "nWeight": 2,
+            "nPoints": 5,
+            "nQuestionNumber": 2
+        },
+        {
+            "strDescription": "text of question three",
+            "strCorrectResponse": "a",
+            "strStatus": "C",
+            "strUserResponse": "a",
+            "nWeight": 3,
+            "nPoints": 5,
+            "nQuestionNumber": 3
+        },
+        {
+            "strDescription": "text of question four",
+            "strCorrectResponse": "c",
+            "strStatus": "C",
+            "strUserResponse": "c",
+            "nWeight": 3,
+            "nPoints": 5,
+            "nQuestionNumber": 4
+        },
+        {
+            "strDescription": "text of question five",
+            "strCorrectResponse": "a",
+            "strStatus": "C",
+            "strUserResponse": "a",
+            "nWeight": 2,
+            "nPoints": 5,
+            "nQuestionNumber": 5
+        },
+        {
+            "strDescription": "text of question six",
+            "strCorrectResponse": "d",
+            "strStatus": "C",
+            "strUserResponse": "d",
+            "nWeight": 1,
+            "nPoints": 5,
+            "nQuestionNumber": 6
+        },
+        {
+            "strDescription": "text of question seven",
+            "strCorrectResponse": false,
+            "strStatus": "C",
+            "strUserResponse": false,
+            "nWeight": 3,
+            "nPoints": 5,
+            "nQuestionNumber": 7
+        },
+        {
+            "strDescription": "text of question eight",
+            "strCorrectResponse": true,
+            "strStatus": "C",
+            "strUserResponse": true,
+            "nWeight": 3,
+            "nPoints": 5,
+            "nQuestionNumber": 8
+        },
+        {
+            "strDescription": "text of question nine",
+            "strCorrectResponse": false,
+            "strStatus": "C",
+            "strUserResponse": false,
+            "nWeight": 3,
+            "nPoints": 5,
+            "nQuestionNumber": 9
+        }, 
+        {
+            "strDescription": "text of question ten",
+            "strCorrectResponse": true,
+            "strStatus": "C",
+            "strUserResponse": true,
+            "nWeight": 3,
+            "nPoints": 5,
+            "nQuestionNumber": 10
+        }
+    ]
+}
